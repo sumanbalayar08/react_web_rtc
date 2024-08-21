@@ -1,51 +1,43 @@
-const { Server } = require("socket.io");
-const express=require("express")
-const app=express()
-const PORT=4000
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io")
+const cors = require("cors")
+const PORT = process.env.PORT || 4000;
 
-app.use(express())
-
-const io = new Server(8000, {
-  cors: true,
+const app = express();
+const server = http.createServer(app)
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
 });
 
-const emailToSocketIdMap = new Map();
-const socketidToEmailMap = new Map();
+app.use(cors());
 
-io.on("connection", (socket) => {
-  console.log(`Socket Connected`, socket.id);
-  socket.on("room:join", (data) => {
-    const { email, room } = data;
-    emailToSocketIdMap.set(email, socket.id);
-    socketidToEmailMap.set(socket.id, email);
-    io.to(room).emit("user:joined", { email, id: socket.id });
-    socket.join(room);
-    io.to(socket.id).emit("room:join", data);
-  });
+io.on('connection', (socket) => {
 
-  socket.on("user:call", ({ to, offer }) => {
-    io.to(to).emit("incomming:call", { from: socket.id, offer });
-  });
+  console.log("A user is connected");
+  console.log(socket.id);
+  socket.emit("me", socket.id);
 
-  socket.on("call:accepted", ({ to, ans }) => {
-    io.to(to).emit("call:accepted", { from: socket.id, ans });
-  });
+  socket.on('disconnect', () => {
+    socket.broadcast.emit("callEnded");
+  })
+  socket.on('clientMessage', (data) => {
+    console.log(data)
+  })
 
-  socket.on("peer:nego:needed", ({ to, offer }) => {
-    console.log("peer:nego:needed", offer);
-    io.to(to).emit("peer:nego:needed", { from: socket.id, offer });
+  socket.on("callUser", ({ userToCall, signalData, from, name }) => {
+    io.to(userToCall).emit("callUser", { signal: signalData, from, name });
   });
+  socket.on("answerCall", (data) => {
+    io.to(data.to).emit("callAccepted", data.signal);
+  });
+})
 
-  socket.on("peer:nego:done", ({ to, ans }) => {
-    console.log("peer:nego:done", ans);
-    io.to(to).emit("peer:nego:final", { from: socket.id, ans });
-  });
+app.get("/", (req, res) => {
+  res.send("Hello World");
 });
 
-app.get('/',(req,res)=>{
-    res.send("Hello World")
-})
-
-app.listen(PORT,()=>{
-    console.log(`Server started Successfully at port ${PORT}`)
-})
+server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
