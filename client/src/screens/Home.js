@@ -1,13 +1,13 @@
 import React from 'react'
 import Notification from '../components/Notification'
 import VideoPlayer from '../components/VideoPlayer'
-import Option from '../components/Option'
+import Options from '../components/Options'
 
 const Home = () => {
   return (
       <div>
           <VideoPlayer />
-          <Option />
+          <Options />
           <Notification/>
       </div>
   )

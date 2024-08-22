@@ -65,7 +65,7 @@ export const SocketProvier = ({ children }) => {
   };
 
   const leaveCall = () => {
-    setCallEnded(false);
+    setCallEnded(true);
     connectionRef.current.destroy();
   };
 

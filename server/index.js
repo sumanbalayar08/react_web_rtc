@@ -12,7 +12,6 @@ const io = socketIo(server, {
     methods: ["GET", "POST"],
   },
 });
-
 app.use(cors());
 
 io.on('connection', (socket) => {
